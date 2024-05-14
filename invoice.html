@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JAYAMURUGAN - Invoice</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+    }
+
+    header {
+      padding: 20px;
+      background-color: #ff8c00;
+      color: #fff;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    #goBack, #printInvoice, #addItem, #deleteItem,#downloadPdf {
+      background-color: #ff8c00;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 20px;
+    }
+
+    #printInvoice {
+      margin-left: 10px;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    #totalRow td {
+      font-weight: bold;
+    }
+
+    #customerInfo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px;
+    }
+
+    #customerNameInput {
+      width: 200px;
+    }
+
+    #dateAndTime {
+      font-size: 14px;
+    }
+
+    .editable {
+      border: none;
+      background-color: transparent;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .dropdown-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      border: 1px solid #ddd;
+      position: absolute;
+      z-index: 1;
+      background-color: #fff;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      display: none;
+      width: 100%;
+    }
+
+    .dropdown-list li {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .dropdown-list li:hover {
+      background-color: #f5f5f5;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>JAYAMURUGAN TEX</h1>
+  </header>
+
+  <div id="customerInfo">
+    <div>
+      <p>Customer Name: <input type="text" id="customerNameInput" value=""></p>
+    </div>
+    <div id="dateAndTime"></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Price (₹)</th>
+        <th>Quantity</th>
+        <th>Total Price (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- No default rows -->
+    </tbody>
+  </table>
+
+  <div>
+    <button id="goBack">Go Back</button>
+    <button id="printInvoice" onclick="addInvoice()">Save Invoice</button>
+    <button id="downloadPdf" onclick="printInvoice()">Print Invoice</button>
+    <button id="deleteItem" onclick="deleteItem()">Delete Item</button>
+    <button id="addItem" onclick="addItem()">Add Item</button>
+  </div>
+  
+  <p id="totalPrice">Total Amount: ₹0.00</p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  <script>
+    var currentBillNumber = 1;
+    var data = {};
+    let data1 = {};
+    window.onload = function() {
+      document.getElementById('customerNameInput').focus();
+      updateDateAndTime(); // Update date and time when the page loads
+      setInterval(updateDateAndTime, 1000); // Set interval to update date and time every second
+    };
+    let printInvoice = () => {
+      const form = document.createElement('form');
+      form.setAttribute('method', 'GET'); // Set method to POST
+      form.setAttribute('action', './bill');
+      let cusname = document.getElementById('customerNameInput').value;
+      console.log(data1)
+      let d = JSON.stringify({data1,cusname});
+      const input = document.createElement('input');
+      input.setAttribute('type', 'hidden'); // Hidden input field
+      input.setAttribute('name', 'data'); // Set input name to key
+      input.setAttribute('value', d); // Set input value to corresponding value in dataToSend
+      form.appendChild(input); // Append input field to the form
+      document.body.appendChild(form);
+
+// Submit the form
+      form.submit();
+      // window.location.href = './bill';
+    }
+    function goBack() {
+      // Navigate back to index.html in Electron
+      window.location.href = 'file:///D:/Consultancy/billing/index.html';
+    }
+    
+    function addItem() {
+      var tableBody = document.querySelector('table tbody');
+      var newRow = tableBody.insertRow(-1); // Insert new row at the end
+
+      // Add cells for the new row
+      for (var i = 0; i < 4; i++) {
+        newRow.insertCell(i);
+      }
+
+      // Make Product Name and Quantity cells editable input fields
+      newRow.cells[0].innerHTML = '<input type="text" placeholder="Product Name">';
+      newRow.cells[1].innerHTML = '<div><input type="number" id="price" value="0.00"/></div>'; // Initial price set to 0.00
+      newRow.cells[2].innerHTML = '<div><input type="number" oninput="updateTotal(this)" id="quantity" value="0.00"/></div>';
+
+      // Example: Set default values for the new row
+      newRow.cells[3].innerText = '';
+
+      calculateTotal(); // Recalculate total after adding the new item
+    }
+
+    function deleteItem() {
+      var tableBody = document.querySelector('table tbody');
+      var rows = tableBody.querySelectorAll('tr:not(#totalRow)');
+
+      if (rows.length > 0) {
+        tableBody.deleteRow(rows.length - 1); // Delete the last item row
+        calculateTotal(); // Recalculate total after deleting the item
+      }
+    }
+
+    function calculateTotal() {
+      var totalPrice = 0;
+      var table = document.querySelector('table tbody');
+      var rows = table.querySelectorAll('tr:not(#totalRow)');
+
+      rows.forEach(function(row) {
+        var productName = row.cells[0].querySelector('input');
+        if(productName.value == "")return;
+        var priceInput = row.cells[1].querySelector('input');
+        var quantityInput = row.cells[2].querySelector('input');
+        data[productName.value] = quantityInput.value;
+        let pri = priceInput.value,qua = quantityInput.value,na = productName.value;
+        data1[productName.value] = {pri,qua,na};
+        // console.log(data)
+        // Parse price and quantity as floats
+        var price = parseFloat(priceInput.value);
+        var quantity = parseFloat(quantityInput.value);
+
+        // Check if price and quantity are valid numbers
+        if (!isNaN(price) && !isNaN(quantity)) {
+          var total = price * quantity;
+          row.cells[3].innerText = '₹' + total.toFixed(2);
+          totalPrice += total;
+        } else {
+          row.cells[3].innerText = '₹0.00'; // Set total price to 0.00 if price or quantity is invalid
+        }
+      });
+
+      document.getElementById('totalPrice').innerText = 'Total: ₹' + totalPrice.toFixed(2);
+    }
+
+    function updateDateAndTime() {
+      var dateAndTimeElement = document.getElementById('dateAndTime');
+      var now = new Date();
+      var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true };
+      var formattedDateAndTime = now.toLocaleDateString('en-US', options);
+      dateAndTimeElement.innerText = formattedDateAndTime;
+    }
+
+    function updateTotal(input) {
+      var row = input.closest('tr');
+      var price = parseFloat(row.cells[1].querySelector('input').value); // Extract price from input field
+      var quantity = parseFloat(input.value);
+      var total = price * quantity;
+      row.cells[3].innerText = '₹' + total.toFixed(2);
+      calculateTotal(); // Recalculate total after updating the quantity
+    }
+
+    function addInvoice(){
+      var total = document.getElementById('totalPrice').innerText;
+      // console.log(total)
+      total = total.slice(8,total.length-3);
+      console.log(total)
+      let customerName = document.getElementById('customerNameInput').value;
+      let newData = [total,data,customerName]
+      fetch('http://localhost:3000/addInvoice', {
+        method: 'POST', // or 'PUT', 'DELETE', etc.
+        headers: {
+          'Content-Type': 'application/json', // Specify the content type
+          // You might need additional headers for authentication, etc.
+        },
+        body: JSON.stringify(newData) // Convert data to JSON string
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json(); // Assuming your backend returns JSON
+      })
+      .then(data => {
+        // Handle the response from the backend if needed
+        console.log(data);
+      })
+      .catch(error => {
+        // Handle errors here
+        console.error('There was a problem with the fetch operation:', error);
+      });
+    }
+
+    document.getElementById('downloadPdf').addEventListener('click', downloadPdf);
+
+//     function downloadPdf() {
+//     var customerName = document.getElementById('customerNameInput').value;
+//     var invoiceDate = document.getElementById('dateAndTime').innerText;
+//     var productNames = document.querySelectorAll('table tbody tr td:nth-child(1) input');
+//     var prices = document.querySelectorAll('table tbody tr td:nth-child(2) input');
+//     var quantities = document.querySelectorAll('table tbody tr td:nth-child(3) input');
+//     var totalAmount = document.getElementById('totalPrice').innerText;
+
+//     // Fill in the placeholders in the bill template
+//     document.getElementById('customerName').innerText = 'customerName: ' + customerName;
+//     document.getElementById('invoiceDate').innerText = 'Date: ' + invoiceDate;
+
+//     var tableBody = document.getElementById('invoiceBody');
+//     tableBody.innerHTML = ''; // Clear existing rows
+
+//     var html = '';
+//     for (var i = 0; i < productNames.length; i++) {
+//         html += '<tr>';
+//         html += '<td>' + productNames[i].value + '</td>';
+//         html += '<td>' + prices[i].value + '</td>';
+//         html += '<td>' + quantities[i].value + '</td>';
+//         html += '<td>' + (parseFloat(prices[i].value) * parseFloat(quantities[i].value)) + '</td>';
+//         html += '</tr>';
+//     }
+//     tableBody.innerHTML = html;
+
+//     // Fill in the total amount
+//     document.getElementById('totalAmount').innerText = 'Total: ' + totalAmount;
+
+//     // Generate PDF
+//     var opt = {
+//         margin: 0.5,
+//         filename: 'invoice.pdf',
+//         image: { type: 'jpeg', quality: 0.98 },
+//         html2canvas: { scale: 2 },
+//         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+//     };
+//     var element = document.querySelector('.container');
+//     html2pdf().set(opt).from(element).save();
+// }
+
+  </script>
+</body>
+</html>

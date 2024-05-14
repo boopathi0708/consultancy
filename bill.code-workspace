@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Consultancy/billing/images"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "bill"
+	}
+}

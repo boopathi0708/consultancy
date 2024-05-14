@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 800px;
+        margin: 50px auto;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .company-name {
+        font-size: 28px;
+        font-weight: bold;
+        color: #333;
+    }
+    .info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+    .info div {
+        font-size: 16px;
+        color: #555;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+    .table th, .table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+    .total {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: right;
+    }
+    .printdiv{
+        width: 100%;
+        text-align: center;
+    }
+    .print{
+        background-color: #19ec06;
+        color: black;
+        padding: 0.5rem 1rem;
+        border-radius: 10%;
+        border-color: black;
+        border-style: solid;
+    }
+    @media print{
+        .printdiv{
+            display: none;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="company-name">JAYAMURUGAN TEX</div>
+    </div>
+    <div class="info">
+        <div id="customerName">Customer Name: <%= cus %> </div>
+        <div id="invoiceDate">Date: <%= fore %></div>
+    </div>
+    <table class="table" id="invoiceTable">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total Amount</th>
+            </tr>
+            <% for (const key in data) { %>
+                <tr>
+                    <td><%= key %></td> <!-- Assuming key is the product name -->
+                    <td><%= data[key].pri %></td>
+                    <td><%= data[key].qua %></td>
+                    <td><%= data[key].pri*data[key].qua %></td>
+                </tr>
+            <% } %>
+        </thead>
+        <tbody id="invoiceBody">
+            <!-- Dynamic rows will be added here -->
+        </tbody>
+    </table>
+    <div class="total" id="totalAmount">
+        Total: <%= total %>
+    </div>
+    <div class="printdiv">
+        <button class="print" onclick="window.print()">print</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+<script>
+    function downloadPdf() {
+        // Fetch input values from the invoice form
+        var customerName = document.getElementById('customerNameInput').value;
+        var invoiceDate = document.getElementById('invoiceDateInput').value;
+        var productNames = document.querySelectorAll('.productName');
+        var prices = document.querySelectorAll('.price');
+        var quantities = document.querySelectorAll('.quantity');
+        var totalAmount = document.getElementById('totalPrice').innerText;
+
+        // Fill in the placeholders in the invoice template
+        document.getElementById('customerName').innerText += customerName;
+        document.getElementById('invoiceDate').innerText += invoiceDate;
+
+        var invoiceBody = document.getElementById('invoiceBody');
+        var html = '';
+
+        // Populate table rows with product details
+        for (var i = 0; i < productNames.length; i++) {
+            html += '<tr>';
+            html += '<td>' + productNames[i].value + '</td>';
+            html += '<td>' + prices[i].value + '</td>';
+            html += '<td>' + quantities[i].value + '</td>';
+            html += '<td>' + (parseFloat(prices[i].value) * parseFloat(quantities[i].value)) + '</td>';
+            html += '</tr>';
+        }
+
+        invoiceBody.innerHTML = html;
+
+        // Fill in the total amount
+        document.getElementById('totalAmount').innerText += totalAmount;
+
+        // Generate PDF
+        var element = document.querySelector('.container');
+        var opt = {
+          margin: 0.5,
+          filename: 'invoice.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
+</body>
+</html>

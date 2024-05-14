@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Income Search</title>
+<style>
+  body {
+    background-image: url('incomebg.png'); /* Replace 'background.jpg' with your image file */
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  h2 {
+    text-align: center;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  form {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 30px; /* Increased padding */
+    border-radius: 20px; /* Increased border-radius */
+    max-width: 400px; /* Added max-width */
+    width: 100%; /* Added width */
+  }
+
+  label {
+    display: block;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  input[type="date"] {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    width: calc(100% - 20px); /* Adjusted width */
+  }
+
+  button[type="submit"] {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    width: 100%; /* Added width */
+  }
+
+  button[type="submit"]:hover {
+    background-color: #45a049;
+  }
+</style>
+</head>
+<body>
+
+<h2>Income Search</h2>
+
+<form method="POST" action="/getIncome" >
+  <label for="fromDate">From Date:</label>
+  <!-- <input type="date" id="fromDate" name="fromDate"> -->
+  <input type="date" id="fromDate" name="fromDate" pattern="\d{4}-\d{2}-\d{2}" placeholder="YYYY-MM-DD">
+  
+  <input type="date" id="toDate" name="toDate" pattern="\d{4}-\d{2}-\d{2}" placeholder="YYYY-MM-DD">
+  <!-- <label for="toDate">To Date:</label> -->
+  <!-- <input type="date" id="toDate" name="toDate"> -->
+
+  <button type="submit">Search</button>
+  <div>
+    Total Income: 
+    <p id="totalIncome"><%= totalIncome %></p>
+  </div>
+</form>
+</body>
+<script>
+  function stop(event) {
+      event.preventDefault();
+      // Other custom logic if needed
+  }
+</script>
+</html>

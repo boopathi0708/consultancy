@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JAYAMURUGAN TEX - Invoice</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+    }
+
+    header {
+      padding: 20px;
+      background-color: #ff8c00;
+      color: #fff;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    #goBack, #printInvoice, #addItem, #deleteItem {
+      background-color: #ff8c00;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 20px;
+    }
+
+    #printInvoice {
+      margin-left: 10px;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    #totalRow td {
+      font-weight: bold;
+    }
+
+    #customerInfo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px;
+    }
+
+    #customerNameInput {
+      width: 200px;
+    }
+
+    #dateAndTime {
+      font-size: 14px;
+    }
+
+    .editable {
+      border: none;
+      background-color: transparent;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .dropdown-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      border: 1px solid #ddd;
+      position: absolute;
+      z-index: 1;
+      background-color: #fff;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      display: none;
+      width: 100%;
+    }
+
+    .dropdown-list li {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .dropdown-list li:hover {
+      background-color: #f5f5f5;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>JAYAMURUGAN TEX</h1>
+  </header>
+
+  <div id="customerInfo">
+    <div>
+      <p>Customer Name: <input type="text" id="customerNameInput" value=""></p>
+    </div>
+    <div id="dateAndTime"></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Price (₹)</th>
+        <th>Quantity</th>
+        <th>Total Price (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- No default rows -->
+    </tbody>
+  </table>
+
+  <div>
+    <a href="/home" style="display: inline-block;">
+      <button id="goBack">Go Back</button>
+    </a>
+    
+      <button id="printInvoice"onclick="addInvoice()" >Print</button>
+
+    
+    <button id="deleteItem" onclick="deleteItem()" style="display: inline-block;">Delete Item</button>
+    <button id="addItem" onclick="addItem()" style="display: inline-block;">Add Item</button>
+  </div>
+  
+  <p id="totalPrice">Total Amount: ₹0.00</p>
+
+  <script>
+    var currentBillNumber = 1;
+    var data = {};
+    window.onload = function() {
+      document.getElementById('customerNameInput').focus();
+      updateDateAndTime(); // Update date and time when the page loads
+      setInterval(updateDateAndTime, 1000); // Set interval to update date and time every second
+    };
+    
+    function goBack() {
+      // Navigate back to index.html in Electron
+      window.location.href = 'file:///D:/Consultancy/billing/index.html';
+    }
+    
+    function addItem() {
+      var tableBody = document.querySelector('table tbody');
+      var newRow = tableBody.insertRow(-1); // Insert new row at the end
+
+      // Add cells for the new row
+      for (var i = 0; i < 4; i++) {
+        newRow.insertCell(i);
+      }
+
+      // Make Product Name and Quantity cells editable input fields
+      newRow.cells[0].innerHTML = '<input type="text" placeholder="Product Name">';
+      newRow.cells[1].innerHTML = '<div><input type="number" id="price" value="0.00"/></div>'; // Initial price set to 0.00
+      newRow.cells[2].innerHTML = '<div><input type="number" oninput="updateTotal(this)" id="quantity" value="0.00"/></div>';
+
+      // Example: Set default values for the new row
+      newRow.cells[3].innerText = '';
+
+      calculateTotal(); // Recalculate total after adding the new item
+    }
+
+    function deleteItem() {
+      var tableBody = document.querySelector('table tbody');
+      var rows = tableBody.querySelectorAll('tr:not(#totalRow)');
+
+      if (rows.length > 0) {
+        tableBody.deleteRow(rows.length - 1); // Delete the last item row
+        calculateTotal(); // Recalculate total after deleting the item
+      }
+    }
+
+    function calculateTotal() {
+      var totalPrice = 0;
+      var table = document.querySelector('table tbody');
+      var rows = table.querySelectorAll('tr:not(#totalRow)');
+
+      rows.forEach(function(row) {
+        var productName = row.cells[0].querySelector('input');
+        var priceInput = row.cells[1].querySelector('input');
+        var quantityInput = row.cells[2].querySelector('input');
+        data[productName.value] = quantityInput.value;
+        // console.log(data)
+        // Parse price and quantity as floats
+        var price = parseFloat(priceInput.value);
+        var quantity = parseFloat(quantityInput.value);
+
+        // Check if price and quantity are valid numbers
+        if (!isNaN(price) && !isNaN(quantity)) {
+          var total = price * quantity;
+          row.cells[3].innerText = '₹' + total.toFixed(2);
+          totalPrice += total;
+        } else {
+          row.cells[3].innerText = '₹0.00'; // Set total price to 0.00 if price or quantity is invalid
+        }
+      });
+
+      document.getElementById('totalPrice').innerText = 'Total: ₹' + totalPrice.toFixed(2);
+    }
+
+    function updateDateAndTime() {
+      var dateAndTimeElement = document.getElementById('dateAndTime');
+      var now = new Date();
+      var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true };
+      var formattedDateAndTime = now.toLocaleDateString('en-US', options);
+      dateAndTimeElement.innerText = formattedDateAndTime;
+    }
+
+    function updateTotal(input) {
+      var row = input.closest('tr');
+      var price = parseFloat(row.cells[1].querySelector('input').value); // Extract price from input field
+      var quantity = parseFloat(input.value);
+      var total = price * quantity;
+      row.cells[3].innerText = '₹' + total.toFixed(2);
+      calculateTotal(); // Recalculate total after updating the quantity
+    }
+
+    // Close dropdown list when clicking anywhere outside of it
+    document.addEventListener('click', function (event) {
+      var dropdownLists = document.querySelectorAll('.dropdown-list');
+      dropdownLists.forEach(function(dropdownList) {
+        if (!dropdownList.contains(event.target)) {
+          dropdownList.style.display = 'none';
+        }
+      });
+    });
+
+
+
+    function addInvoice(){
+      var total = document.getElementById('totalPrice').innerText;
+      // console.log(total)
+      total = total.slice(8,total.length-3);
+      console.log(total)
+      let customerName = document.getElementById('customerNameInput').value;
+      let newData = [total,data,customerName]
+      fetch('http://localhost:3000/addInvoice', {
+        method: 'POST', // or 'PUT', 'DELETE', etc.
+        headers: {
+          'Content-Type': 'application/json', // Specify the content type
+          // You might need additional headers for authentication, etc.
+        },
+        body: JSON.stringify(newData) // Convert data to JSON string
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json(); // Assuming your backend returns JSON
+      })
+      .then(data => {
+        // Handle the response from the backend if needed
+        console.log(data);
+      })
+      .catch(error => {
+        // Handle errors here
+        console.error('There was a problem with the fetch operation:', error);
+      });
+    }
+  </script>
+</body>
+</html>
