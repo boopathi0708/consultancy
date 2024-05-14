@@ -253,7 +253,7 @@
       console.log(total)
       let customerName = document.getElementById('customerNameInput').value;
       let newData = [total,data,customerName]
-      fetch('http://localhost:3000/addInvoice', {
+      fetch('https://jayamurugantex.onrender.com/addInvoice', {
         method: 'POST', // or 'PUT', 'DELETE', etc.
         headers: {
           'Content-Type': 'application/json', // Specify the content type
